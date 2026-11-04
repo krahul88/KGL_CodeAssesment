@@ -1,0 +1,6 @@
+@ProductionPlantEvaluation.API_HostAddress = http://localhost:5136
+
+GET {{ProductionPlantEvaluation.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

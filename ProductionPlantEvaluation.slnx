@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ProductionPlantEvaluation.API/ProductionPlantEvaluation.API.csproj" />
+    <Project Path="src/ProductionPlantEvaluation.Application/ProductionPlantEvaluation.Application.csproj" />
+    <Project Path="src/ProductionPlantEvaluation.Domain/ProductionPlantEvaluation.Domain.csproj" />
+    <Project Path="src/ProductionPlantEvaluation.Infrastructure/ProductionPlantEvaluation.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ProductionPlantEvaluation.IntegrationTests/ProductionPlantEvaluation.IntegrationTests.csproj" />
+    <Project Path="tests/ProductionPlantEvaluation.UnitTests/ProductionPlantEvaluation.UnitTests.csproj" />
+  </Folder>
+</Solution>

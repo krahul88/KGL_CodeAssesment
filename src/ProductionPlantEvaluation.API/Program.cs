@@ -16,6 +16,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
         builder.Configuration.GetConnectionString(
             "DefaultConnection")));
 builder.Services.AddScoped<IRuleRepository, RuleRepository>();
+builder.Services.AddScoped<IEvaluationLogRepository, EvaluationLogRepository>();
 
 builder.Services.AddScoped<IRuleEvaluator, RuleEvaluator>();
 
@@ -34,12 +35,10 @@ if (builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
     await dbContext.Database.MigrateAsync();
 }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

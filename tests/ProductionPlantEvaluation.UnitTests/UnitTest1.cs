@@ -1,9 +1,26 @@
 ﻿using ProductionPlantEvaluation.Domain.DTO;
+using ProductionPlantEvaluation.Application.Interfaces;
+using ProductionPlantEvaluation.Infrastructure;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ProductionPlantEvaluation.UnitTests;
 
 public class UnitTest1
 {
+    [Fact]
+    public async Task GetRulesetsAsync_RepeatedCalls_UsesCachedRulesets()
+    {
+        var repository = new CountingRuleRepository();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var ruleCache = new RuleCacheService(cache, repository);
+
+        var firstResult = await ruleCache.GetRulesetsAsync(CancellationToken.None);
+        var secondResult = await ruleCache.GetRulesetsAsync(CancellationToken.None);
+
+        Assert.Same(firstResult, secondResult);
+        Assert.Equal(1, repository.CallCount);
+    }
+
     [Fact]
     public void Evaluate_Equals_ShouldReturnTrue()
     {
@@ -29,6 +46,17 @@ public class UnitTest1
 
         Assert.True(result);
     }
+
+internal sealed class CountingRuleRepository : IRuleRepository
+{
+    public int CallCount { get; private set; }
+
+    public Task<List<Ruleset>> GetActiveRulesetsAsync(CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult(new List<Ruleset>());
+    }
+}
 
     [Fact]
     public void Evaluate_LessThanOrEqual_ShouldReturnTrue()

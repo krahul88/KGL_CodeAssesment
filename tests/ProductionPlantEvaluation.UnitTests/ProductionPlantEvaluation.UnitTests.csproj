@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProductionPlantEvaluation.Domain\ProductionPlantEvaluation.Domain.csproj" />
     <ProjectReference Include="..\..\src\ProductionPlantEvaluation.Application\ProductionPlantEvaluation.Application.csproj" />
+    <ProjectReference Include="..\..\src\ProductionPlantEvaluation.Infrastructure\ProductionPlantEvaluation.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

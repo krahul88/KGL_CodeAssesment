@@ -5,26 +5,30 @@ using ProductionPlantEvaluation.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 namespace ProductionPlantEvaluation.Application.Services
 {
     public class OrderEvaluationService : IOrderEvaluationService
     {
-        private readonly IRuleRepository _ruleRepository;
+        private readonly IRuleCacheService _ruleCacheService;
         private readonly IRuleEvaluator _ruleEvaluator;
+        private readonly IEvaluationLogRepository _evaluationLogRepository;
 
-        public OrderEvaluationService(IRuleRepository ruleRepository,
-        IRuleEvaluator ruleEvaluator)
+        public OrderEvaluationService(IRuleCacheService ruleCacheService,
+        IRuleEvaluator ruleEvaluator,
+        IEvaluationLogRepository evaluationLogRepository)
         {
-            _ruleRepository = ruleRepository;
+            _ruleCacheService = ruleCacheService;
             _ruleEvaluator = ruleEvaluator;
+            _evaluationLogRepository = evaluationLogRepository;
         }
 
         public async Task<EvaluationResponse> EvaluateAsync(OrderRequest request, CancellationToken cancellationToken)
         {
             var context = BuildContext(request);
-            var rulesets = await _ruleRepository
-            .GetActiveRulesetsAsync(cancellationToken);
+            var rulesets = await _ruleCacheService
+                .GetRulesetsAsync(cancellationToken);
 
             foreach (var ruleset in rulesets.OrderBy(x => x.Priority))
             {
@@ -42,7 +46,7 @@ namespace ProductionPlantEvaluation.Application.Services
                     if (!ruleMatched)
                         continue;
 
-                    return new EvaluationResponse
+                    var response = new EvaluationResponse
                     {
                         Matched = true,
                         ProductionPlant = rule.ProductionPlant,
@@ -50,6 +54,9 @@ namespace ProductionPlantEvaluation.Application.Services
                         MatchedRule = rule.Name,
                         Reason = "All conditions satisfied"
                     };
+
+                    await SaveEvaluationLogAsync(request, response, cancellationToken);
+                    return response;
                 }
 
                 // First matching Ruleset wins.
@@ -57,11 +64,46 @@ namespace ProductionPlantEvaluation.Application.Services
                 break;
             }
 
-            return new EvaluationResponse
+            var unmatchedResponse = new EvaluationResponse
             {
                 Matched = false,
                 Reason = "No matching rule found"
             };
+
+            await SaveEvaluationLogAsync(request, unmatchedResponse, cancellationToken);
+            return unmatchedResponse;
+        }
+
+        public Task LogInvalidRequestAsync(
+            OrderRequest? request,
+            CancellationToken cancellationToken)
+        {
+            return SaveEvaluationLogAsync(
+                request,
+                new EvaluationResponse
+                {
+                    Matched = false,
+                    Reason = "Invalid request for the submitted order"
+                },
+                cancellationToken);
+        }
+
+        private Task SaveEvaluationLogAsync(
+            OrderRequest? request,
+            EvaluationResponse response,
+            CancellationToken cancellationToken)
+        {
+            return _evaluationLogRepository.AddAsync(new EvaluationLog
+            {
+                OrderId = request?.OrderId ?? string.Empty,
+                InputJson = JsonSerializer.Serialize(request),
+                Matched = response.Matched,
+                MatchedRuleset = response.MatchedRuleset,
+                MatchedRule = response.MatchedRule,
+                ProductionPlant = response.ProductionPlant,
+                Reason = response.Reason,
+                EvaluatedAtUtc = DateTime.UtcNow
+            }, cancellationToken);
         }
 
         private OrderEvaluationContext BuildContext(

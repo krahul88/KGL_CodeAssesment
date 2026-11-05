@@ -10,5 +10,9 @@ namespace ProductionPlantEvaluation.Application.Interfaces
         Task<EvaluationResponse> EvaluateAsync(
             OrderRequest context,
             CancellationToken cancellationToken);
+
+        Task LogInvalidRequestAsync(
+            OrderRequest? request,
+            CancellationToken cancellationToken);
     }
 }
